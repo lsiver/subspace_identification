@@ -2,11 +2,11 @@
   "Case_1": {
     "name": "Case_1",
     "inputs": [
-      "SP2.csv"
+      "TC_REBOIL_SP.csv"
     ],
     "outputs": [
-      "OP2.csv",
-      "PV2.csv"
+      "FC_REBOIL_OP.csv",
+      "TC_REBOIL_PV.csv"
     ]
   }
 }
