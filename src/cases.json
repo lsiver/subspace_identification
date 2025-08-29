@@ -2,10 +2,11 @@
   "Case_1": {
     "name": "Case_1",
     "inputs": [
-      "SP.csv"
+      "SP2.csv"
     ],
     "outputs": [
-      "PV.csv"
+      "OP2.csv",
+      "PV2.csv"
     ]
   }
 }
