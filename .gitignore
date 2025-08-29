@@ -7,3 +7,6 @@ src/main3.py
 src/OP2.csv
 src/PV2.csv
 src/SP2.csv
+.venv
+.idea
+.ipynb_checkpoints
