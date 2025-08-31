@@ -1,24 +1,16 @@
 from Subspace_ID import subspace_id, unit_step_responses, plot_unit_step_responses
 
 class CaseRun:
-    inputs = []
-    outputs = []
-    ttss = 0
-    order = 0
-    sys_id = None
-    transfer_functions = None #dictionary of per channel transfer functions and gains
-    t = 0 #time vector for ttss
-    Y = None #Simulated unit-step responses
-
-
     def __init__(self, inputs=None, outputs=None,ttss=0):
-        if outputs is None:
-            outputs = []
-        if inputs is None:
-            inputs = []
-        self.inputs = inputs
-        self.outputs = outputs
+        self.inputs = inputs or []
+        self.outputs = outputs or []
         self.ttss = int(ttss)
+        self.order = 0
+        self.sys_id = None
+        self.transfer_functions = None #dictionary of per channel transfer functions and gains
+        self.t = None #time vector for ttss
+        self.Y = None #Simulated unit-step responses
+
 
     def run_case(self):
         self.sys_id, self.transfer_functions = subspace_id(self.inputs[1],self.outputs[1])

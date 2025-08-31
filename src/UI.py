@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QWidget, QPushButton, QListWidget, QFileDialog,
                              QLabel, QGroupBox, QMessageBox, QAction, QInputDialog,
                              QDialog, QDialogButtonBox, QListWidgetItem, QCheckBox,
-                             QScrollArea, QFrame, QLineEdit)
+                             QScrollArea, QFrame, QLineEdit, QSpinBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QDoubleValidator
 import pandas as pd
@@ -14,6 +14,8 @@ import os
 import numpy as np
 import json
 from CaseRunClass import CaseRun
+from src.CasesClass import Case
+
 
 class PlotCanvas(FigureCanvas):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -135,16 +137,29 @@ class CaseDialog(QDialog):
 
         layout.addWidget(QLabel("Select vectors for inputs and outputs:"))
 
-        #TTSS Field
-        ttss_row = QHBoxLayout()
-        ttss_row.addWidget(QLabel("TTSS:"))
-        self.ttss_input = QLineEdit()
-        validator = QDoubleValidator(bottom = 0, top = 6000,decimals=0,parent=self)
-        self.ttss_input.setValidator(validator)
-        if self.case_data.get("ttss") is not None:
-            self.ttss_input.setText(str(self.case_data["ttss"]))
-        ttss_row.addWidget(self.ttss_input)
-        layout.addLayout(ttss_row)
+        #TTSS fields
+        ttss_group = QGroupBox("TTSS preset")
+        ttss_row = QHBoxLayout(ttss_group)
+
+        raw_ttss = self.case_data.get("ttss",[45,90,120])
+        if isinstance(raw_ttss,(int,float)):
+            defaults = [int(raw_ttss),90,120]
+        else:
+            defaults = list(raw_ttss) if isinstance(raw_ttss, list) else [45,90,120]
+        defaults = (defaults + [45,90,120])[:3]
+
+        self.ttss_spins = []
+        for k, val in enumerate(defaults, 1):
+            ttss_row.addWidget(QLabel(f"TTSS{k}:"))
+            spin = QSpinBox()
+            spin.setRange(0, 6000)
+            spin.setSingleStep(5)
+            spin.setValue(int(val))
+            self.ttss_spins.append(spin)
+            ttss_row.addWidget(spin)
+
+        layout.addWidget(ttss_group)
+
 
         scroll = QScrollArea()
         scroll_widget = QWidget()
@@ -190,13 +205,13 @@ class CaseDialog(QDialog):
     def get_case_data(self):
         inputs = [vector for vector, checkbox in self.input_checkboxes.items() if checkbox.isChecked()]
         outputs = [vector for vector, checkbox in self.output_checkboxes.items() if checkbox.isChecked()]
-        ttss_text = self.ttss_input.text().strip()
+        ttss_list = [spin.value() for spin in self.ttss_spins]
 
         return {
             "name": self.case_name,
             "inputs": inputs,
             "outputs": outputs,
-            "ttss": float(ttss_text) if ttss_text != "" else None
+            "ttss": ttss_list,
         }
 
 class CSVManager(QMainWindow):
@@ -490,9 +505,12 @@ class CSVManager(QMainWindow):
         input_tuple = (case_data['inputs'],final_input)
         output_tuple = (case_data['outputs'],final_output)
 
-        newRun = CaseRun(input_tuple,output_tuple,ttss)
-        newRun.run_case()
-        newRun.plot_unit_responses()
+        newCase = Case(input_tuple,output_tuple,ttss)
+        newCase.runcases()
+        newCase.plot_overlaid()
+        # newRun = CaseRun(input_tuple,output_tuple,ttss)
+        # newRun.run_case()
+        # newRun.plot_unit_responses()
 
     def edit_case(self):
         current_item = self.cases_list.currentItem()

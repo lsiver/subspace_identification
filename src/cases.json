@@ -8,15 +8,14 @@
     ],
     "outputs": [
       "DP_DEBUT",
-      "FC_DIST_PV",
-      "FC_REBOIL_OP",
-      "FC_REFLUX_OP",
       "FC_REFLUX_PV",
-      "PC_TOP_OP",
-      "PC_TOP_PV",
       "TC_REBOIL_PV",
       "TI_TOP_PV"
     ],
-    "ttss": 600.0
+    "ttss": [
+      90,
+      120,
+      180
+    ]
   }
 }
