@@ -62,7 +62,7 @@ def subspace_id(inputs, outputs):
     return sys_id, transfer_functions
 
 def calculate_dc_gain_ss(A, B, C, D):
-    #gain: C (I - A)^(-1) B + D
+    #gain C (I - A)^(-1) B + D
     I = np.eye(A.shape[0])
     try:
         X = np.linalg.solve(I - A, B)
@@ -78,8 +78,8 @@ def unit_step_responses(sys_id, n_steps=400, step_at=1):
     Simulate MIMO responses to a +1-unit step on each input (others = 0).
     Outputs stay in their native units.
     """
-    #  t : (n_steps,) time vector in seconds
-    #  Y : dict[(out_idx, in_idx)] -> (n_steps,) response y_i to unit step in u_j
+    #  t ~ (n_steps,) time vector in seconds
+    #  Y ~ dict[(out_idx, in_idx)] = (n_steps,) response yi to unit step in uj
     Ts = 1.0
 
     n_out = sys_id.C.shape[0]
