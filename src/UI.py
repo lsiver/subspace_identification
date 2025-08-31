@@ -428,7 +428,7 @@ class CSVManager(QMainWindow):
                 name = os.path.splitext(os.path.basename(file))[0]
                 self.vectors[name] = df
 
-                item = QListWidgetItem(f"{name} ({df.shape[0]}x{df.shape[1]})")
+                item = QListWidgetItem(f"{name}")
                 item.setData(Qt.UserRole, name)
                 self.list_widget.addItem(item)
 
@@ -475,7 +475,6 @@ class CSVManager(QMainWindow):
         case_data = self.cases[case_name]
 
         input_stack = []
-        print(case_data['inputs'])
         for inputs in case_data['inputs']:
             if inputs in self.vectors:
                 df = self.vectors[inputs].to_numpy().reshape(1, -1)
@@ -492,7 +491,6 @@ class CSVManager(QMainWindow):
         output_tuple = (case_data['outputs'],final_output)
 
         newRun = CaseRun(input_tuple,output_tuple,ttss)
-        #newRun = CaseRun(final_input,final_output,ttss)
         newRun.run_case()
         newRun.plot_unit_responses()
 
