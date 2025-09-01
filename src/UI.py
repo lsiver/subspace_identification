@@ -505,7 +505,7 @@ class CSVManager(QMainWindow):
         input_tuple = (case_data['inputs'],final_input)
         output_tuple = (case_data['outputs'],final_output)
 
-        newCase = Case(input_tuple,output_tuple,ttss)
+        newCase = Case(input_tuple,output_tuple,ttss,case_name)
         newCase.runcases()
         newCase.plot_overlaid()
         # newRun = CaseRun(input_tuple,output_tuple,ttss)

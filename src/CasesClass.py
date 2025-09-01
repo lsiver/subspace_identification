@@ -5,14 +5,17 @@ from src.CaseRunClass import CaseRun
 
 
 class Case:
-    def __init__(self,inputs=None,outputs=None,ttss_list=None):
+    def __init__(self,inputs=None,outputs=None,ttss_list=None, name = ""):
         self.inputs = inputs
         self.outputs = outputs
         self.ttss_list = ttss_list
         self.caseruns = [CaseRun(self.inputs,self.outputs,ttss) for ttss in self.ttss_list]
+        self.name = name
 
     def runcases(self):
         for caserun in self.caseruns:
+            caserun.name = self.name + " TTSS "+str(caserun.ttss)
+            print("Running Case",caserun.name)
             caserun.run_case()
 
     def plot_overlaid(self):

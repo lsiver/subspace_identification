@@ -13,6 +13,7 @@ class CaseRun:
         self.transfer_functions = None #dictionary of per channel transfer functions and gains
         self.t = None #time vector for ttss
         self.Y = None #Simulated unit-step responses
+        self.name = ""
 
 
     def run_case(self):
