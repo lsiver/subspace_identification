@@ -4,20 +4,19 @@ import numpy as np
 from sippy_unipi import functionset as fset
 from sippy_unipi import functionsetSIM as fsetSIM
 from scipy import signal
+from scipy.linalg import hankel
 
-def subspace_id(inputs, outputs):
+def subspace_id(inputs, outputs,order = None):
     # Identify MIMO system and extract individual transfer functions
     # inputs: array of shape (n_inputs, n_samples)
     # outputs: array of shape (n_outputs, n_samples)
-    #System order should be >= num of outputs
-    #Will optimize this later...
-    system_order = max(2, outputs.shape[0])
+    order = int(determine_optimal_order(inputs, outputs))
     # identify the MIMO system
     sys_id = system_identification(
         outputs,
         inputs,
         "N4SID",
-        SS_fixed_order=system_order
+        SS_fixed_order=order
     )
 
     # get system dimensions
@@ -54,15 +53,6 @@ def subspace_id(inputs, outputs):
             }
 
     return sys_id, transfer_functions
-
-def subspace_id_transient(U, Y, ttss_minutes, order=None, k=2.0):
-    if order is None:
-        order = max(2, Y.shape[0])
-    change_times = detect_changes_adaptive(U, q=0.9, min_gap=30)
-    Uc, Yc = make_transient_dataset(U, Y, change_times, ttss_minutes, k=k, pre=10, spacer=2)
-    if Uc is None:
-        Uc, Yc = U, Y
-    return subspace_id(Uc, Yc)
 
 def calculate_dc_gain_ss(A, B, C, D):
     #gain C (I - A)^(-1) B + D
@@ -138,50 +128,174 @@ def plot_unit_step_responses(t, Y, n_inputs, n_outputs, inputs_names, outputs_na
 
     plt.show()
 
+def determine_optimal_order(inputs, outputs, max_order=30):
+    # order selection using SVD of Hankel matrix
+
+    n_samples = inputs.shape[1]
+    horizon = min(n_samples // 3, 100)
+
+    data = np.vstack([outputs, inputs])
+
+    H = np.zeros((data.shape[0] * horizon, n_samples - horizon))
+    for i in range(data.shape[0]):
+        for j in range(horizon):
+            H[i*horizon + j, :] = data[i, j:j+n_samples-horizon]
+
+    U, s, Vt = np.linalg.svd(H, full_matrices=False)
+
+    # find elbow in singular values
+    s_normalized = s / s[0]
+    threshold = 0.01
+    effective_rank = np.sum(s_normalized > threshold)
+
+    suggested_order = max(2, min(effective_rank // (inputs.shape[0] + outputs.shape[0]), max_order))
+
+    return suggested_order
+
+
+def subspace_id2(inputs, outputs, order=None):
+    U_mean = inputs.mean(axis=1, keepdims=True)
+    Y_mean = outputs.mean(axis=1, keepdims=True)
+    U_std = inputs.std(axis=1, keepdims=True) + 1e-10
+    Y_std = outputs.std(axis=1, keepdims=True) + 1e-10
+
+    U_scaled = (inputs - U_mean) / U_std
+    Y_scaled = (outputs - Y_mean) / Y_std
+
+    if order is None:
+        order = int(determine_optimal_order(U_scaled, Y_scaled))
+        print(f"Auto-selected order: {order}")
+
+    sys_id = system_identification(
+        Y_scaled,
+        U_scaled,
+        "N4SID",
+        SS_fixed_order=order,
+        SS_D_required=True,
+        SS_A_stability=True
+    )
+
+    n_inputs = inputs.shape[0]
+    n_outputs = outputs.shape[0]
+    transfer_functions = {}
+
+    for out_idx in range(n_outputs):
+        for in_idx in range(n_inputs):
+            C_siso = sys_id.C[out_idx:out_idx+1, :]
+            B_siso = sys_id.B[:, in_idx:in_idx+1]
+            D_siso = sys_id.D[out_idx:out_idx+1, in_idx:in_idx+1]
+
+            # xfer to transfer fxn
+            num, den = signal.ss2tf(sys_id.A, B_siso, C_siso, D_siso)
+            num = num[0]
+
+            # calculate actual gain
+            dc_gain_scaled = calculate_dc_gain_ss(sys_id.A, B_siso, C_siso, D_siso)
+            actual_dc_gain = dc_gain_scaled * (Y_std[out_idx] / U_std[in_idx])
+
+            transfer_functions[(out_idx, in_idx)] = {
+                "num": np.asarray(num).ravel(),
+                "den": np.asarray(den).ravel(),
+                "dc_gain": float(actual_dc_gain),
+                "scaled_sys": (sys_id.A, B_siso, C_siso, D_siso),
+                "scaling": (U_std[in_idx], Y_std[out_idx]),
+                "Ts": 1.0
+            }
+
+    return sys_id, transfer_functions
+
+def subspace_id_transient(U, Y, ttss_minutes, order=None, k=2.0):
+    if order is None:
+        order = int(determine_optimal_order(U, Y))
+
+    change_times = detect_changes_adaptive(U, q=0.9, min_gap=30)
+
+    # Extract transient windows
+    Uc, Yc = make_transient_dataset(U, Y, change_times, ttss_minutes, k=k, pre=10, spacer=2)
+
+    if Uc is None:
+        Uc, Yc = U, Y
+
+    return subspace_id(Uc, Yc, order=order)
+
 def detect_changes_adaptive(U, q=0.9, min_gap=30):
-    Um = U.mean(axis=1, keepdims=True)
-    Us = U.std(axis=1, keepdims=True) + 1e-9
-    UN = (U - Um) / Us
-    dUN = np.abs(np.diff(UN, axis=1, prepend=UN[:, :1]))
-    thr = np.quantile(dUN, q)
-    m, N = UN.shape
-    last = np.full(m, -min_gap-1, dtype=int)
-    times = set()
+    # detect when step changes occur in the input signals
+    m, N = U.shape
+
+    U_norm = np.zeros_like(U)
+    for i in range(m):
+        mean = U[i, :].mean()
+        std = U[i, :].std() + 1e-10
+        U_norm[i, :] = (U[i, :] - mean) / std
+
+    dU = np.abs(np.diff(U_norm, axis=1, prepend=U_norm[:, :1]))
+
+    thresholds = np.zeros(m)
+    for i in range(m):
+        thresholds[i] = np.quantile(dU[i, :], q)
+
+    change_times = []
+    last_change = -min_gap - 1
+
     for t in range(1, N):
-        fired = False
-        for j in range(m):
-            if dUN[j, t] >= thr and (t - last[j]) >= min_gap:
-                last[j] = t
-                fired = True
-        if fired:
-            times.add(t)
-    return sorted(times)
+        if np.any(dU[:, t] > thresholds):
+            if t - last_change >= min_gap:
+                change_times.append(t)
+                last_change = t
+
+    return change_times
 
 def make_transient_dataset(U, Y, change_times, ttss_min, k=2.0, pre=10, spacer=2):
+    # extract windows around step changes
+    if len(change_times) == 0:
+        return None, None
+
     n_in, N = U.shape
     n_out = Y.shape[0]
-    win = int(np.ceil(k * ttss_min))
-    Uc, Yc = [], []
+
+    window_size = int(np.ceil(k * ttss_min))
+
+    Uc_segments = []
+    Yc_segments = []
+
     for t0 in change_times:
         t_start = max(0, t0 - pre)
-        t_end = min(N, t0 + win)
-        if (t_end - t_start) < (pre + 5):
+        t_end = min(N, t0 + window_size)
+
+        if (t_end - t_start) < (pre + ttss_min//2):
             continue
+
         u_seg = U[:, t_start:t_end].copy()
         y_seg = Y[:, t_start:t_end].copy()
-        u_base = U[:, max(0, t0-pre):t0].mean(axis=1, keepdims=True)
-        y_base = Y[:, max(0, t0-pre):t0].mean(axis=1, keepdims=True)
-        u_seg -= u_base
-        y_seg -= y_base
-        u_seg[:, :min(pre, u_seg.shape[1])] = 0.0
-        Uc.append(u_seg)
-        Yc.append(y_seg)
-        if spacer>0:
-            Uc.append(np.zeros((n_in, spacer)))
-            Yc.append(np.zeros((n_out, spacer)))
-    if not Uc:
+
+        baseline_start = max(0, t0 - pre)
+        baseline_end = t0
+
+        if baseline_end > baseline_start:
+            u_baseline = U[:, baseline_start:baseline_end].mean(axis=1, keepdims=True)
+            y_baseline = Y[:, baseline_start:baseline_end].mean(axis=1, keepdims=True)
+
+            u_seg -= u_baseline
+            y_seg -= y_baseline
+
+        if t0 - t_start > 0:
+            u_seg[:, :t0-t_start] = 0.0
+
+
+        Uc_segments.append(u_seg)
+        Yc_segments.append(y_seg)
+
+        if spacer > 0:
+            Uc_segments.append(np.zeros((n_in, spacer)))
+            Yc_segments.append(np.zeros((n_out, spacer)))
+
+    if len(Uc_segments) == 0:
         return None, None
-    return np.concatenate(Uc, axis=1), np.concatenate(Yc, axis=1)
+
+    Uc = np.concatenate(Uc_segments, axis=1)
+    Yc = np.concatenate(Yc_segments, axis=1)
+
+    return Uc, Yc
 
 if __name__ == "__main__":
     n_samples = 500
