@@ -1,8 +1,14 @@
 # Subspace Identification
 
-##
+## Purpose
 
-Program to perform subspace identification for process data. This is a multiple input -> multiple output 
-type of modeling.
+The purpose of this application is to identify refinery plant / chemical plant dynamics using a multiple input
+multiple output model. N4SID is used for this *(Numerical Algorithms for Subspace State Space System Identification)*.
 
-Work in progress...
+ - Import vectors (fake data)
+ - Run the case
+ - Models are identified
+
+*Need to add predictions based on identified models.*
+
+![Screenshot](/MIMO.png)
