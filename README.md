@@ -8,13 +8,17 @@ multiple output model. N4SID is used for this *(Numerical Algorithms for Subspac
  - Import vectors (fake data)
  - Run the case
  - Models are identified
+ - Run predictions
 
-*Need to add predictions based on identified models.*
+Import the vector data. Fake data is supplied for testing the program:
 
-![Screenshot](/MIMO.png)
+![Screenshot](./support_material/import_csv.png)
+
+Run a case, results are displayed:
 
 ![Screenshot](./support_material/case_results.png)
-![Screenshot](./support_material/import_csv.png)
+
+Run predictions. 
 ![Screenshot](./support_material/prediction_example.png)
 ![Screenshot](./support_material/predictions.png)
 
