@@ -18,5 +18,21 @@
       120,
       150
     ]
+  },
+  "Case_2": {
+    "name": "Case_2",
+    "inputs": [
+      "FC_DIST_SP",
+      "FC_REFLUX_SP"
+    ],
+    "outputs": [
+      "FC_DIST_PV",
+      "FC_REFLUX_PV"
+    ],
+    "ttss": [
+      45,
+      90,
+      120
+    ]
   }
 }

@@ -223,6 +223,7 @@ class CSVManager(QMainWindow):
         self.cases_file = "cases.json"
         self.initUI()
         self.load_cases()
+        self.caserun_list = {}
 
     def initUI(self):
         self.setWindowTitle('MIMO Dynamics')
@@ -307,6 +308,10 @@ class CSVManager(QMainWindow):
         run_case_btn = QPushButton('Run Case')
         run_case_btn.clicked.connect(self.run_case)
         case_controls.addWidget(run_case_btn)
+
+        run_preds_btn = QPushButton('Run Pred')
+        run_preds_btn.clicked.connect(self.run_pred)
+        case_controls.addWidget(run_preds_btn)
 
         cases_layout.addLayout(case_controls)
 
@@ -507,10 +512,25 @@ class CSVManager(QMainWindow):
 
         newCase = Case(input_tuple,output_tuple,ttss,case_name)
         newCase.runcases()
+
+        self.caserun_list[case_name] = newCase
+
         newCase.plot_overlaid()
-        # newRun = CaseRun(input_tuple,output_tuple,ttss)
-        # newRun.run_case()
-        # newRun.plot_unit_responses()
+
+
+    def run_pred(self):
+        current_item = self.cases_list.currentItem()
+        if not current_item:
+            QMessageBox.warning(self, "Warning", "Please select a case to predict")
+            return
+        case_name = current_item.text()
+
+        self.caserun_list[case_name].caseruns[1].create_predictor()
+        self.caserun_list[case_name].caseruns[1].create_predictions()
+        #we'll predict the "middle" TTSS, eventually give the option to choose
+        #the one to predict
+
+
 
     def edit_case(self):
         current_item = self.cases_list.currentItem()

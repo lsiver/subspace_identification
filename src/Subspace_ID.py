@@ -265,8 +265,8 @@ def make_transient_dataset(U, Y, change_times, ttss_min, k=2.0, pre=10, spacer=2
         if (t_end - t_start) < (pre + ttss_min//2):
             continue
 
-        u_seg = U[:, t_start:t_end].copy()
-        y_seg = Y[:, t_start:t_end].copy()
+        u_seg = U[:, t_start:t_end].copy().astype(np.float64)
+        y_seg = Y[:, t_start:t_end].copy().astype(np.float64)
 
         baseline_start = max(0, t0 - pre)
         baseline_end = t0
@@ -296,8 +296,3 @@ def make_transient_dataset(U, Y, change_times, ttss_min, k=2.0, pre=10, spacer=2
     Yc = np.concatenate(Yc_segments, axis=1)
 
     return Uc, Yc
-
-if __name__ == "__main__":
-    n_samples = 500
-    n_inputs = 2
-    n_outputs = 3
