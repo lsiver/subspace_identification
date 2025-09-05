@@ -96,13 +96,25 @@ class MIMOPredictor:
         for i in range(self.n_outputs):
             plt.figure(figsize=(12, 6))
 
-            plt.plot(time_vector, outputs[:, i], label=f"Predicted {output_names[i]}",
+            #calculate avgs so i can shift the data to match so you do not need to
+            #scale axes separately
+            skip_samples = int(0.05*len(outputs))
+            predicted_avg = np.mean(outputs[skip_samples:, i])
+
+            actual_length = min(len(time_vector), actual_outputs.shape[1])
+            actual_avg = np.mean(actual_outputs[i, skip_samples:actual_length])
+
+            offset = actual_avg - predicted_avg
+
+            shifted_outputs = outputs[:, i] + offset
+
+            plt.plot(time_vector, shifted_outputs, label=f"Predicted {output_names[i]}",
                      linewidth=2, linestyle='-', color='blue')
 
             actual_length = min(len(time_vector), actual_outputs.shape[1])
             plt.plot(time_vector[:actual_length], actual_outputs[i, :actual_length],
                      label=f"Actual {output_names[i]}", linewidth=2, linestyle='-',
-                     color='red', alpha=0.8)
+                     color='red', alpha=0.5)
 
             plt.title(f"{title} - {output_names[i]}")
             plt.xlabel("Time")

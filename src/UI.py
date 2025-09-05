@@ -223,7 +223,7 @@ class CSVManager(QMainWindow):
         self.cases_file = "cases.json"
         self.initUI()
         self.load_cases()
-        self.caserun_list = {}
+        self.caserun_list = {} #not used yet
 
     def initUI(self):
         self.setWindowTitle('MIMO Dynamics')
