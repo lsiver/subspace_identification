@@ -1,6 +1,7 @@
 import numpy as np
 
-from Subspace_ID import subspace_id, unit_step_responses, plot_unit_step_responses, subspace_id_transient
+#added src to subspace_ID
+from src.Subspace_ID import subspace_id, unit_step_responses, plot_unit_step_responses, subspace_id_transient
 from src.MIMO_prediction import MIMOPredictor
 
 

@@ -1,0 +1,25 @@
+{
+  "case_1": {
+    "name": "case_1",
+    "inputs": [
+      "FC_DIST_SP",
+      "FC_REFLUX_SP",
+      "FI_FEED_PV",
+      "PC_TOP_SP",
+      "TC_REBOIL_SP"
+    ],
+    "outputs": [
+      "DP_DEBUT",
+      "FC_REBOIL_OP",
+      "FC_REFLUX_OP",
+      "FI_TOPVAP",
+      "PC_TOP_OP",
+      "TI_TOP_PV"
+    ],
+    "ttss": [
+      45,
+      90,
+      120
+    ]
+  }
+}

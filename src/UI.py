@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 import os
 import numpy as np
 import json
-from CaseRunClass import CaseRun
+#from CaseRunClass import CaseRun
 from src.CasesClass import Case
 
 
