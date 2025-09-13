@@ -417,6 +417,14 @@ class CSVManager(QMainWindow):
         run_case_action.triggered.connect(self.run_case)
         cases_menu.addAction(run_case_action)
 
+        # options menu
+        options_menu = menubar.addMenu('Options')
+
+        set_input_scaling_action = QAction('Input Scaling',self)
+        set_input_scaling_action.triggered.connect(self.set_scaling)
+        options_menu.addAction(set_input_scaling_action)
+
+
     def create_plot_window(self):
         if self.plot_window is None:
             self.plot_window = PlotWindow(self)
@@ -529,6 +537,9 @@ class CSVManager(QMainWindow):
         self.caserun_list[case_name].caseruns[1].create_predictions()
         #we'll predict the "middle" TTSS, eventually give the option to choose
         #the one to predict
+
+    def set_scaling(self):
+        x = 0
 
 
 
