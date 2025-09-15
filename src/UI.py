@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QWidget, QPushButton, QListWidget, QFileDialog,
                              QLabel, QGroupBox, QMessageBox, QAction, QInputDialog,
                              QDialog, QDialogButtonBox, QListWidgetItem, QCheckBox,
-                             QScrollArea, QFrame, QLineEdit, QSpinBox)
+                             QScrollArea, QFrame, QLineEdit, QSpinBox, QTableWidget, QTableWidgetItem)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QDoubleValidator
 import pandas as pd
@@ -213,6 +213,56 @@ class CaseDialog(QDialog):
             "outputs": outputs,
             "ttss": ttss_list,
         }
+
+class InputScalingDialog(QDialog):
+    def __init__(self, parent=None, vectors=None, defaults=None,title="Input Scaling"):
+        super().__init__(parent)
+        self.vectors = list(vectors or [])
+        self.defaults = dict(defaults or {})
+        self.setWindowTitle(title)
+        self.resize(480,420)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel("Set scaling for the inputs:", self))
+
+        self.table = QTableWidget(len(self.vectors), 2, self)
+        self.table.setHorizontalHeaderLabels(["Input", "Scale"])
+        self.table.verticalHeader().setVisible(False)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setAlternatingRowColors(True)
+        self.table.setColumnWidth(0, 280)
+        self.table.setColumnWidth(1, 120)
+
+        for r, name in enumerate(self.vectors):
+        # left column: name
+            item = QTableWidgetItem(name)
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+            self.table.setItem(r, 0, item)
+
+            #right column for scaling
+            spin = QSpinBox(self.table)
+            spin.setRange(0, 1_000_000)
+            spin.setSingleStep(1)
+            spin.setValue(int(self.defaults.get(name, 1)))
+            self.table.setCellWidget(r, 1, spin)
+
+        self.table.resizeColumnsToContents()
+        layout.addWidget(self.table)
+
+        # ok/cancel
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def values(self):
+        out = {}
+        for r in range(self.table.rowCount()):
+            name = self.table.item(r, 0).text()
+            spin = self.table.cellWidget(r, 1)
+            out[name] = spin.value()
+        return out
 
 class CSVManager(QMainWindow):
     def __init__(self):
@@ -544,15 +594,22 @@ class CSVManager(QMainWindow):
         #shouldn't do this
         #should add an MV each time a case is edited/added
         #will re-do it eventually
-        if len(self.input_scaling) == 0:
-            for case in self.cases:
-                for mvs in self.cases[case]['inputs']:
-                    if mvs not in self.input_scaling:
-                        self.input_scaling[mvs] = 1
-                    if mvs not in self.input_list:
-                        self.input_list.append(mvs)
 
+        inputs = []
+        for case_name, case in self.cases.items():
+            for mv in case.get("inputs",[]):
+                if mv not in inputs:
+                    inputs.append(mv)
 
+        if not inputs:
+            QMessageBox.information(self, "Input Scaling", "No inputs found")
+            return
+
+        # open dialog box with current defaults (self.input_scaling), if any
+        dlg = InputScalingDialog(self, vectors=inputs, defaults=self.input_scaling, title="Input Scaling")
+        if dlg.exec_() == QDialog.Accepted:
+            self.input_scaling = dlg.values()
+            QMessageBox.information(self, "Input Scaling", "Scaling updated.")
 
     def edit_case(self):
         current_item = self.cases_list.currentItem()
