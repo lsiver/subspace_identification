@@ -1,7 +1,8 @@
 import numpy as np
 
 #added src to subspace_ID
-from src.Subspace_ID import subspace_id, unit_step_responses, plot_unit_step_responses, subspace_id_transient
+from src.Subspace_ID import subspace_id, unit_step_responses, plot_unit_step_responses, subspace_id_transient, \
+    plot_scaled_step_responses
 from src.MIMO_prediction import MIMOPredictor
 
 
@@ -33,7 +34,8 @@ class CaseRun:
         self.t, self.Y = unit_step_responses(self.sys_id, self.ttss, step_at = 1)
 
     def plot_unit_responses(self):
-        plot_unit_step_responses(self.t, self.Y, self.sys_id.B.shape[1], self.sys_id.C.shape[0], self.inputs[0],self.outputs[0])
+        #plot_unit_step_responses(self.t, self.Y, self.sys_id.B.shape[1], self.sys_id.C.shape[0], self.inputs[0],self.outputs[0])
+        plot_scaled_step_responses(self.t, self.Y,self.sys_id.B.shape[1], self.sys_id.C.shape[0], self.inputs[0], self.outputs[0], input_scaling)
 
     def create_predictor(self):
         self.pred = MIMOPredictor(self)

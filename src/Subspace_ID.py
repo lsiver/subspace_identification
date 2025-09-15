@@ -128,6 +128,51 @@ def plot_unit_step_responses(t, Y, n_inputs, n_outputs, inputs_names, outputs_na
 
     plt.show()
 
+def plot_scaled_step_responses(
+        t, Y, n_inputs, n_outputs, inputs_names, outputs_names, input_scaling
+):
+
+    scales = []
+    for name in inputs_names:
+        try:
+            scales.append(float(input_scaling.get(name, 1.0)))
+        except (TypeError, ValueError):
+            scales.append(1.0)
+
+    fig, axes = plt.subplots(
+        n_inputs, n_outputs,
+        figsize=(4 * n_outputs, 3 * n_inputs),
+        squeeze=False, sharex=True, sharey='col'
+    )
+
+    for j in range(n_inputs):
+        s = scales[j]
+        for i in range(n_outputs):
+            ax = axes[j, i]
+            y = np.asarray(Y[(i, j)])
+            ax.plot(t, s * y, linewidth=2)
+            ax.grid(True, alpha=0.3)
+            ax.set_xlabel('')
+            ax.set_ylabel('')
+
+    # column headers
+    for i, output_name in enumerate(outputs_names):
+        axes[0, i].set_title(f'{output_name}', pad=10)
+
+    # row headers
+    for j, input_name in enumerate(inputs_names):
+        tag = f"{input_name}" if scales[j] == 1 else f"{input_name} × {scales[j]:g}"
+        pos = axes[j, 0].get_position()
+        fig.text(
+            pos.x0 - 0.02,
+            pos.y0 + pos.height / 2,
+            tag,
+            va='center', ha='right',
+            rotation=90, fontsize=12, fontweight='bold'
+        )
+
+    plt.show()
+
 def determine_optimal_order(inputs, outputs, max_order=30):
     # order selection using SVD of Hankel matrix
 

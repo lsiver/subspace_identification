@@ -10,6 +10,8 @@
       "DP_DEBUT",
       "FC_REBOIL_OP",
       "FC_REFLUX_PV",
+      "PC_TOP_OP",
+      "PC_TOP_PV",
       "TC_REBOIL_PV",
       "TI_TOP_PV"
     ],

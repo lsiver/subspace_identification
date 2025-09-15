@@ -569,12 +569,13 @@ class CSVManager(QMainWindow):
         input_tuple = (case_data['inputs'],final_input)
         output_tuple = (case_data['outputs'],final_output)
 
-        newCase = Case(input_tuple,output_tuple,ttss,case_name)
+        newCase = Case(input_tuple,output_tuple,ttss,case_name, self.input_scaling)
         newCase.runcases()
 
         self.caserun_list[case_name] = newCase
 
-        newCase.plot_overlaid()
+        #newCase.plot_overlaid()
+        newCase.plot_overlaid_scaled()
 
 
     def run_pred(self):
