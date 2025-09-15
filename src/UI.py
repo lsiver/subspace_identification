@@ -224,6 +224,7 @@ class CSVManager(QMainWindow):
         self.initUI()
         self.load_cases()
         self.caserun_list = {} #not used yet
+        self.input_scaling = {}
 
     def initUI(self):
         self.setWindowTitle('MIMO Dynamics')
@@ -539,7 +540,17 @@ class CSVManager(QMainWindow):
         #the one to predict
 
     def set_scaling(self):
-        x = 0
+
+        #shouldn't do this
+        #should add an MV each time a case is edited/added
+        #will re-do it eventually
+        if len(self.input_scaling) == 0:
+            for case in self.cases:
+                for mvs in self.cases[case]['inputs']:
+                    if mvs not in self.input_scaling:
+                        self.input_scaling[mvs] = 1
+                    if mvs not in self.input_list:
+                        self.input_list.append(mvs)
 
 
 
