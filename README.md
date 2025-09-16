@@ -26,6 +26,7 @@ multiple output model. N4SID is used for this *(Numerical Algorithms for Subspac
 ## Future Work
 
  - ~~Scale gain relationships by input sizes set by user~~
+   - implemented this as the default *Options>Input Scaling*
  - Add option to apply a simple first order exponential filter to outputs before running the analysis
  - Add lineariziation option for inputs / outputs
  - Checkbox style is clunky for setting up model runs, need to change this
